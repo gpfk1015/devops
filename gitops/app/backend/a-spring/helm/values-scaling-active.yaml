@@ -1,0 +1,14 @@
+# 노드 스펙: 24vCore 96GB
+# 노드 5개 기준 설정
+resources:
+  requests:
+    cpu: "2000m"
+    memory: "3072Mi" #3G
+  limits:
+    memory: "5120Mi" #5G
+hpa:
+  enabled: true
+  minReplicas: 10
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 65
+  targetMemoryUtilizationPercentage: 75

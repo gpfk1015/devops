@@ -1,0 +1,65 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: {{ .Values.applicationName }}
+  annotations:
+    argocd.argoproj.io/sync-options: ServerSideApply=true
+  labels:
+    app: {{ .Values.applicationName }}
+spec:
+{{ if not .Values.hpa.enabled}}
+  replicas: {{ .Values.replicaCount }}
+{{- end }}
+  #replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.applicationName }}
+  
+  strategy:
+    {{- if .Values.service.canary }}
+    canary:
+      steps:
+      # 1. 새 버전(Canary)으로 10% 트래픽 전송
+      - setWeight: 10
+      # 2. 1분간 대기 (ArgoCD UI에서 수동 'Promote'도 가능)
+      - pause: { duration: 1m } 
+      # 3. 50% 트래픽 전송
+      - setWeight: 50
+      # 4. 1분 대기
+      - pause: { duration: 1m }
+      # (100% 전환은 마지막 단계 후 자동으로 이루어짐)
+    {{- end}}
+    {{- if .Values.service.bluegreen }}
+    blueGreen: 
+      activeService: {{ .Values.applicationName }}    # 운영
+      previewService: {{ .Values.applicationName }}-bluegreen  # 테스트
+      autoPromotionEnabled: true
+      scaleDownDelaySeconds: 60 # 전환 후 이전 버전을 몇 초 뒤에 삭제할지
+    {{- end}}
+
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.applicationName }}
+    spec:
+      terminationGracePeriodSeconds: 80
+      containers:
+      - name: {{ .Values.applicationName }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.service.port }}
+          protocol: TCP
+        env:
+{{- range concat (.Values.defaultEnv | default list) (.Values.env  | default list) }}
+        - name: {{ .name }}
+          value: {{ .value | quote }}
+{{- end }}
+        resources:
+{{ toYaml .Values.resources | indent 10 }}
+      nodeSelector:
+{{ toYaml .Values.nodeSelector | indent 8 }}
+      tolerations:
+{{ toYaml .Values.tolerations | indent 8 }}
+      affinity:
+{{ toYaml .Values.affinity | indent 8 }}

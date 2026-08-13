@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gitlab-runner
+  namespace: gitlab-runner
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gitlab-runner
+  template:
+    metadata:
+      labels:
+        app: gitlab-runner
+    spec:
+      containers:
+      - env:
+        - name: CI_SERVER_URL
+          value: http://<gitlab-server-url>
+        - name: REGISTRATION_TOKEN
+          value: <gitlab-runner-registration-token>
+        - name: RUNNER_EXECUTOR
+          value: kubernetes
+        image: <harbor repository_url>/gitlab-ci/gitlab-runner
+        name: gitlab-runner
+        volumeMounts:
+        - mountPath: /etc/gitlab-runner
+          name: config-volume
+      imagePullSecrets:
+      - name: harbor-secret							
+      serviceAccount: gitlab-runner						
+      serviceAccountName: gitlab-runner
+      volumes:
+      - name: config-volume
+        persistentVolumeClaim:
+          claimName: gitlab-runner-config

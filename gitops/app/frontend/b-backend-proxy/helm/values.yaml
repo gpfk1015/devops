@@ -1,0 +1,71 @@
+services:
+  - name: ad-am-level-setting
+    host: "service-b.com
+    path: "/biz/als"
+    stripPath: true
+    namespace: Namespace_B
+  - name: ad-am-result
+    host: "service-b.com
+    path: "/biz/aar"
+    stripPath: true
+    namespace: Namespace_B
+  - name: ad-am-test-bank
+    host: "service-b.com
+    path: "/biz/atb"
+    stripPath: true
+    namespace: Namespace_B
+  - name: ad-ap
+    host: "service-b.com
+    path: "/biz/aap"
+    stripPath: true
+    namespace: Namespace_B
+  - name: ad-cm
+    host: "service-b.com
+    path: "/biz/acm"
+    stripPath: true
+    namespace: Namespace_B
+  - name: ad-ma
+    host: "service-b.com
+    path: "/biz/ama"
+    stripPath: true
+    namespace: Namespace_B
+  - name: ad-mgmt
+    host: "service-b.com
+    path: "/biz/amt"
+    stripPath: true
+    namespace: Namespace_B
+  - name: ad-ps
+    host: "service-b.com
+    path: "/biz/aps"
+    stripPath: true
+    namespace: Namespace_B
+  - name: ad-se
+    host: "service-b.com
+    path: "/biz/ase"
+    stripPath: true
+    namespace: Namespace_B
+  - name: ad-ws
+    host: "service-b.com
+    path: "/biz/aws"
+    stripPath: true
+    namespace: Namespace_B    
+  - name: cm-auth
+    host: "service-b.com
+    path: "/biz/cau"
+    stripPath: true
+    namespace: Namespace_B
+  - name: cm-ss
+    host: "service-b.com
+    path: "/biz/css"
+    stripPath: true
+    namespace: Namespace_B
+  - name: cm-sy
+    host: "service-b.com
+    path: "/biz/csy"
+    stripPath: true
+    namespace: Namespace_B
+  - name: prod1-tokenserver
+    host: "service-b.com
+    path: "/sso"
+    stripPath: false
+    namespace: sso 

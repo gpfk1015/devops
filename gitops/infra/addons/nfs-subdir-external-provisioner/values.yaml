@@ -1,0 +1,15 @@
+nfs:
+  server: <nfs_server_ip>
+  path: <path_on_nfs_server>
+
+storageClass:
+  name: ktc-nfs-client
+  defaultClass: true
+  reclaimPolicy: Retain
+
+image:
+  tag: v4.0.2
+
+serviceAccount:
+  create: false
+  name: null

@@ -1,0 +1,31 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: b-spring
+  namespace: argocd
+spec:
+  ignoreDifferences:
+  - group: argoproj.io
+    kind: Rollout
+    jsonPointers:
+    - /spec/replicas
+  project: default
+  sources:
+    - repoURL: http://<DR Git Reository URL>/infra/charts.git
+      targetRevision: HEAD
+      path: backend
+      helm:
+        valueFiles:
+          - 'values/dr.yaml'
+          - '$values/helm/values.yaml'
+          - '$values/helm/values-dr.yaml'
+    - repoURL: http://<DR Git Reository URL>/backend/b-spring.git
+      targetRevision: HEAD
+      ref: values
+  destination:
+    server: https://<destination server ip>:6443
+    namespace: Namespace_B
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

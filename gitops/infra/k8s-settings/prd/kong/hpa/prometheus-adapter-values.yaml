@@ -1,0 +1,16 @@
+prometheus:
+  url: "http://prometheus-operated.serengeti-mimir-prom.svc"
+  port: 9090
+rules:
+  custom:
+    - seriesQuery: 'kong_http_requests_total{pod!="",namespace!=""}'
+      resources:
+        overrides:
+          # 프로메테우스 라벨 "namespace"를 쿠버네티스 리소스 "namespace"와 매핑
+          namespace: {resource: "namespace"}
+          # 프로메테우스 라벨 "pod"를 쿠버네티스 리소스 "pod"와 매핑
+          pod: {resource: "pod"}
+      name:
+        matches: "^(.*)_total"
+        as: "${1}_per_second"
+      metricsQuery: 'sum(rate(<<.Series>>{<<.LabelMatchers>>}[2m])) by (<<.GroupBy>>)'

@@ -1,0 +1,110 @@
+applicationName: frontend-basic-ba-nb
+replicaCount: 3
+image:
+  repository: <Registry URL>/administrator/frontend-ba-nb
+  tag: prd-20260416_183938
+  pullPolicy: IfNotPresent
+service:
+  port: 3009
+redirectIngress:
+  - enabled: true
+    className: "default"
+    location: /bgportal/main
+    #location: /common
+    hosts:
+      - host: "service-a.com"
+        paths:
+          - path: "/"
+            pathType: Exact
+  - enabled: true
+    className: "mgmt"
+    location: /bgportal/main
+    #location: /common
+    hosts:
+      - host: "service-a.com"
+        paths:
+          - path: "/"
+            pathType: Exact
+resources:
+  requests:
+    cpu: "550m"
+    memory: "2048Mi"
+  limits:
+    memory: "3584Mi" #3.5G
+hpa:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 60
+  targetMemoryUtilizationPercentage: 75
+ingress:
+  - className: default
+    hosts:
+      - host: "service-a.com"
+        paths:
+          - path: "/bgportal"
+            pathType: Prefix
+      - host: "service-a.com"
+        paths:
+          - path: "/"
+            pathType: Prefix
+            # ipRestriction:
+            #   pluginName: "ba-nb-ip-restriction-imsi"
+            #   config:
+            #     deny:
+            #       - "10.11.12.83"
+  - className: mgmt
+    hosts:
+      - host: "service-a.com"
+        paths:
+          - path: "/bgportal"
+            pathType: Prefix
+      - host: "service-a.com"
+        paths:
+          - path: "/"
+            pathType: Prefix
+            # ipRestriction:
+            #   pluginName: "ba-nb-ip-restriction"
+            #   config:
+            #     deny:
+            #       - "172.30.16.58"
+            #       - "210.124.3.50"
+### extraIngress template 사용하는 변수 ###
+wwwBasicsSharedPlugin: true
+basicsRobotsPlugin: true
+extraIngress:
+  - className: default
+    name: "www-redirect"
+    hosts:
+      - host: "basics.go.kr"
+        paths:
+          - path: "/bgportal"
+            pathType: Prefix
+          - path: "/"
+            pathType: Prefix
+  - className: mgmt
+    name: "www-redirect"
+    hosts:
+      - host: "basics.go.kr"
+        paths:
+          - path: "/bgportal"
+            pathType: Prefix
+          - path: "/"
+            pathType: Prefix
+  - className: default
+    name: "robots"
+    hosts:
+      - host: "service-a.com"
+        paths:
+          - path: "/robots.txt"
+            pathType: Exact
+  - className: mgmt
+    name: "robots"
+    hosts:
+      - host: "service-a.com"
+        paths:
+          - path: "/robots.txt"
+            pathType: Exact
+env:
+  - name: OTEL_SERVICE_NAME
+    value: "frontend-basic-ba-nb"

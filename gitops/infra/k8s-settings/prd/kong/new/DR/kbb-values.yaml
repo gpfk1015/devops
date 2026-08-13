@@ -1,0 +1,48 @@
+replicaCount: 3
+
+env:
+  database: "off"
+  log_level: info
+  trusted_ips: "0.0.0.0/0,::/0"
+  real_ip_header: "proxy_protocol"
+  real_ip_recursive: "on"
+
+image:
+  repository: <<Registry URL>>/library/kong
+  tag: "3.9"
+  pullPolicy: IfNotPresent
+
+proxy:
+  enabled: true
+  type: LoadBalancer
+  loadBalancerIP: 172.20.22.79
+  annotations:
+    loadbalancer.nhncloud/loadbalancer-name: "dr-basic-be-default-ingress"
+    loadbalancer.openstack.org/network-id: "445824ba-cdd1-4c52-bad9-fd41638c6738"
+    loadbalancer.openstack.org/subnet-id: "e26a6ce1-32b1-4292-9ec6-d19aeaca0e0e"
+    loadbalancer.nhncloud/member-subnet-id: "429d3388-d041-4d65-bad7-fbc0479f50de"
+    loadbalancer.nhncloud/loadbalancer-type: "dedicated"
+    service.beta.kubernetes.io/openstack-internal-load-balancer: "true"
+    loadbalancer.nhncloud/listener-protocol: TCP
+    loadbalancer.nhncloud/proxy-protocol: "true"
+  http:
+    enabled: true
+    # nodePort: 30080
+    parameters:
+      - proxy_protocol
+  tls:
+    enabled: true
+    # nodePort: 30443
+    parameters:
+      - proxy_protocol
+
+ingressController:
+  enabled: true
+  ingressClass: default
+  # installCRDs: true
+  ingressClassAnnotations:
+    ingressclass.kubernetes.io/is-default-class: "true"
+  image:
+    repository: <<Registry URL>>/library/kong/kubernetes-ingress-controller
+    tag: "3.5"
+    pullPolicy: IfNotPresent

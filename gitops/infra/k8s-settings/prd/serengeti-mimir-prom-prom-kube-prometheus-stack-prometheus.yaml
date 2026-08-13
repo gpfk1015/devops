@@ -1,0 +1,41 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    cert-manager.io/cluster-issuer: ca-clusterissuer
+    kubernetes.io/ingress.class: default
+    meta.helm.sh/release-name: prom
+    meta.helm.sh/release-namespace: serengeti-mimir-prom
+  creationTimestamp: "2025-09-05T00:06:49Z"
+  generation: 1
+  labels:
+    app: kube-prometheus-stack-prometheus
+    app.kubernetes.io/instance: prom
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: kube-prometheus-stack
+    app.kubernetes.io/version: 0.2.0
+    chart: kube-prometheus-stack-0.2.0
+    heritage: Helm
+    release: prom
+  name: prom-kube-prometheus-stack-prometheus
+  namespace: serengeti-mimir-prom
+  resourceVersion: "8945138"
+  uid: cd7eafae-1bdd-4e2e-9ea6-b2c8aab8b1e5
+spec:
+  rules:
+  - host: prometheus.dev.edu-op.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: prom-kube-prometheus-stack-prometheus
+            port:
+              number: 9090
+        path: /
+        pathType: ImplementationSpecific
+  tls:
+  - hosts:
+    - prometheus.dev.edu-op.com
+    secretName: prometheus-server-tls
+status:
+  loadBalancer: {}

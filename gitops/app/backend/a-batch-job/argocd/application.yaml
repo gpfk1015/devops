@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: a-batch-job
+  namespace: argocd
+spec:
+  project: default
+  sources:
+    - repoURL: http://<Git Repository URL>/infra/charts.git
+      targetRevision: HEAD
+      path: batch
+      helm:
+        valueFiles:
+          - '$values/helm/values.yaml'
+    - repoURL: http://<Git Repository URL>/backend/a-batch-job.git
+      targetRevision: HEAD
+      ref: values
+  destination:
+    server: https://destination-server:6443
+    namespace: Namespace_A
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

@@ -1,0 +1,44 @@
+{{- range .Values.services }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: default
+    konghq.com/preserve-host: "true"
+  name: {{ .name }}-external
+  namespace: Namespace_A
+spec:
+  rules:
+  - host: "{{ .host }}"
+    http:
+      paths:
+      - path: "{{ .path }}"
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .name }}-external
+            port:
+              number: {{ .port }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: mgmt
+    konghq.com/preserve-host: "true"
+  name: {{ .name }}-external-mgmt
+  namespace: Namespace_A
+spec:
+  rules:
+  - host: "{{ .host }}"
+    http:
+      paths:
+      - path: "{{ .path }}"
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .name }}-external
+            port:
+              number: {{ .port }}
+{{- end }}

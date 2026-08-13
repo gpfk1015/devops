@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: gitlab-runner-dev-eform-pv
+spec:
+  capacity:
+    storage: 100Gi
+  accessModes:
+    - ReadWriteMany
+  nfs:
+    server: <nfs_server_ip>
+    path: <path_on_nfs_server>
+  persistentVolumeReclaimPolicy: Retain
+  claimRef:
+    namespace: gitlab-runner
+    name: gitlab-runner-dev-eform-pvc
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: gitlab-runner-stg-eform-pv
+spec:
+  capacity:
+    storage: 100Gi
+  accessModes:
+    - ReadWriteMany
+  nfs:
+    server: <nfs_server_ip>
+    path: <path_on_nfs_server>
+  persistentVolumeReclaimPolicy: Retain
+  claimRef:
+    namespace: gitlab-runner
+    name: gitlab-runner-stg-eform-pvc

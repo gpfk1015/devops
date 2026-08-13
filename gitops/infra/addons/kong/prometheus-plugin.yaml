@@ -1,0 +1,31 @@
+apiVersion: configuration.konghq.com/v1
+kind: KongClusterPlugin
+metadata:
+  name: prometheus-metrics-default
+  annotations:
+    kubernetes.io/ingress.class: default
+  labels:
+    global: "true" # 이 라벨이 있어야 Kong의 모든 트래픽을 감시합니다.
+config:
+  per_consumer: false        # 중요: true로 하면 데이터가 너무 많아져서 Prometheus가 터질 수 있습니다.
+  status_code_metrics: true  # 5xx, 4xx 에러율 확인용
+  latency_metrics: true      # 응답 속도 확인용
+  bandwidth_metrics: true    # 트래픽 양 확인용
+  upstream_health_metrics: true # 중요: 헬스체크 상태(Healthy/Unhealthy)를 보여줍니다.
+plugin: prometheus
+---
+apiVersion: configuration.konghq.com/v1
+kind: KongClusterPlugin
+metadata:
+  name: prometheus-metrics-inaea
+  annotations:
+    kubernetes.io/ingress.class: inaea
+  labels:
+    global: "true" # 이 라벨이 있어야 Kong의 모든 트래픽을 감시합니다.
+config:
+  per_consumer: false        # 중요: true로 하면 데이터가 너무 많아져서 Prometheus가 터질 수 있습니다.
+  status_code_metrics: true  # 5xx, 4xx 에러율 확인용
+  latency_metrics: true      # 응답 속도 확인용
+  bandwidth_metrics: true    # 트래픽 양 확인용
+  upstream_health_metrics: true # 중요: 헬스체크 상태(Healthy/Unhealthy)를 보여줍니다.
+plugin: prometheus

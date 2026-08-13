@@ -1,0 +1,157 @@
+applicationName: backend-app
+
+replicaCount: 3
+
+image:
+  repository: mycompany/springboot-app
+  tag: latest
+  pullPolicy: Always
+
+service:
+  type: ClusterIP
+  port: 8080
+
+ingress:
+  enabled: true
+  className: "default"
+  hosts:
+    - host: springboot-app.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources:
+  requests:
+    cpu: "500m"
+    memory: "1536Mi" #1.5G
+  limits:
+    memory: "3072Mi"
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+hpa:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 65
+  targetMemoryUtilizationPercentage: 75
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 30
+    scaleDown:
+      stabilizationWindowSeconds: 300
+
+volumeMounts:
+  - name: media-store
+    mountPath: /nas 
+      
+defaultEnv:
+  - name: SPRING_RO_DATASOURCE_URL
+    value: "postgresql://<POSTGRES_HOST>:<db port>/testdb"
+  - name: SPRING_RO_DATASOURCE_USERNAME
+    value: "testuser"
+  - name: SPRING_RO_DATASOURCE_PASSWORD
+    value: "testuser"
+  - name: SPRING_RO_DATASOURCE_MAXIMUMPOOLSIZE
+    value: "5"
+  - name: SPRING_RO_DATASOURCE_MINIMUMIDLE
+    value: "3"
+  - name: SPRING_RW_DATASOURCE_URL
+    value: "postgresql://<POSTGRES_HOST>:<db port>/testdb"
+  - name: SPRING_RW_DATASOURCE_USERNAME
+    value: "testuser"
+  - name: SPRING_RW_DATASOURCE_PASSWORD
+    value: "testuser"
+  - name: SPRING_RW_DATASOURCE_MAXIMUMPOOLSIZE
+    value: "5"
+  - name: SPRING_RW_DATASOURCE_MINIMUMIDLE
+    value: "3"
+  - name: SPRING_DATASOURCE_CONNECTIONTIMEOUT
+    value: "30000"
+  # - name: SPRING_DATASOURCE_CONNECTIONTIMEOUT
+  #   value: "3000"
+  - name: SPRING_DATASOURCE_IDLETIMEOUT
+    value: "600000"
+  - name: SPRING_DATASOURCE_MAXLIFETIME
+    value: "1800000"
+  - name: SPRING_DATASOURCE_VALIDATIONTIMEOUT
+    value: "5000"
+  - name: SPRING_DATASOURCE_LEAKDETECTIONTHRESHOLD
+    value: "60000"
+  - name: REDIS_HOST # 현재는 개발을 보고 있음. 원복할 것
+    value: "<REDIS_HOST_IP>"
+  - name: REDIS_PORT
+    value: "6379"
+  - name: REDIS_PASSWORD
+    value: "<REDIS_PASSWORD>"
+  - name: REDIS_TIMEOUT
+    value: "2000"
+  - name: REDIS_DATABASE
+    value: "0"
+  - name: REDIS_LETTUCE_POOL_MAXACTIVE
+    value: "8"
+  - name: REDIS_LETTUCE_POOL_MAXIDLE
+    value: "8"
+  - name: REDIS_LETTUCE_POOL_MINIDLE
+    value: "0"
+  - name: REDIS_LETTUCE_POOL_MAXWAIT
+    value: "-1ms"
+  - name: REDIS_LISTENER_TASKPOOL_COREPOOLSIZE
+    value: "1"
+  - name: REDIS_LISTENER_TASKPOOL_MAXPOOLSIZE
+    value: "5"
+  - name: REDIS_LISTENER_TASKPOOL_KEEPALIVESECONDS
+    value: "60"
+  - name: REDIS_LISTENER_TASKPOOL_QUEUECAPACITY
+    value: "20"
+  - name: SPRING_PROFILES_ACTIVE
+    value: "prod"
+  - name: JWT_SECRET
+    value: "secret"
+  - name: JWT_EXPIRATION
+    value: "3600"
+  # - name: COOKIE_DOMAIN
+  #   value: ""
+  - name: KAFKA_BOOTSTRAP_SERVERS
+    value: "<KAFKA_HOST>:<KAFKA_PORT>,<KAFKA_HOST>:<KAFKA_PORT>,<KAFKA_HOST>:<KAFKA_PORT>"
+  # - name: KAFKA_CLIENT_ID
+  #   value: ""
+  # - name: KAFKA_GROUP_ID
+  #   value: ""
+  - name: KAFKA_BOOTSTRAP_SERVERS
+    value: "<KAFKA_HOST>:<KAFKA_PORT>,<KAFKA_HOST>:<KAFKA_PORT>,<KAFKA_HOST>:<KAFKA_PORT>"
+  - name: SPRING_ZIPKIN_BASE_URL
+    value: "<alloy-operator ip>:9411"
+  - name: SLEUTH_SAMPLER_PROBABILITY
+    value: "1.0"
+  - name: SPRING_SLEUTH_PROPAGATION_TYPE
+    value: "w3c, b3"
+  - name: JWT_ACCESS_TOKEN_VALIDITY
+    value: "10h"
+  - name: JWT_REFRESH_TOKEN_VALIDITY
+    value: "7d"
+  - name: REDIS_CLUSTER_NODES
+    value: "<REDIS_HOST_IP>:<REDIS_PORT>,<REDIS_HOST_IP>:<REDIS_PORT>,<REDIS_HOST_IP>:<REDIS_PORT>"
+  - name: JAVA_TOOL_OPTIONS
+    value: "-XX:InitialRAMPercentage=50.0 -XX:MaxRAMPercentage=75.0"
+  - name: LOGGING_LEVEL_ROOT
+    value: "INFO"
+  - name: LOGGING_LEVEL_ORG_APACHE_IBATIS
+    value: "INFO"
+  - name: LOGGING_LEVEL_ORG_MYBATIS
+    value: "INFO"
+  - name: LOGGING_LEVEL_KR_RE_KICE_ADNP_CM
+    value: "INFO"
+  - name: LOGGING_LEVEL_COM_ZAXXER_HIKARI
+    value: "WARN"
+  - name: LOGGING_LEVEL_ORG_APACHE_HTTP
+    value: "WARN"
+  - name: LOGGING_LEVEL_ORG_APACHE_KAFKA
+    value: "WARN"
+  - name: SERVER_SHUTDOWN
+    value: "graceful"
+  - name: SPRING_LIFECYCLE_TIMEOUT_PER_SHUTDOWN_PHASE
+    value: "70s"

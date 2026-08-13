@@ -1,0 +1,31 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: frontend-inaea-ad-ap
+  namespace: argocd
+spec:
+  ignoreDifferences:
+  - group: argoproj.io
+    kind: Rollout
+    jsonPointers:
+    - /spec/replicas
+  project: default
+  sources:
+    - repoURL: http://<Git Repository URL>/infra/adnp-charts.git
+      targetRevision: HEAD
+      path: frontend
+      helm:
+        valueFiles:
+          - '$values/helm/values.yaml'
+          #- '$values/helm/values-prd.yaml'
+          - '$values/helm/values-scaling-active.yaml'
+    - repoURL: http://<Git Repository URL>/frontend/inaea-ad-ap.git
+      targetRevision: HEAD
+      ref: values
+  destination:
+    server: https://<destination server ip>:6443
+    namespace: Namespace_B
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

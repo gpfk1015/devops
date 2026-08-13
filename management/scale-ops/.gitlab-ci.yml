@@ -1,0 +1,99 @@
+stages:
+  - scale-deploy
+
+variables:
+  CI_IMAGE: "${REGISTRY_URL}/${REGISTRY_CI_PROJECT_NAME}/alpine:3.19"
+  TARGET_APP:
+    description: "대상 앱 이름 또는 ALL"
+    value: "ALL"
+  LEVEL:
+    description: "적용할 단계 (1, 2, 3, 4)"
+    value: "1"
+  DRY_RUN:
+    description: "true 설정 시 실제 push없이 변경사항만 확인"
+    value: "true"
+
+update_scaling_mode:
+  stage: scale-deploy
+  image: ${CI_IMAGE}
+  # UI에서 실행할 때만 보이도록 설정
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "web" 
+  script:
+    - |
+      git config --global user.email "ci-bot@example.com"
+      git config --global user.name "GitLab CI"
+
+      # 앱 리스트 파일 존재 여부 확인
+      LIST_FILE="apps_list.txt"
+      if [ ! -f "$LIST_FILE" ]; then
+        echo "에러: $LIST_FILE 파일을 찾을 수 없습니다."
+        exit 1
+      fi
+
+      # 파일에서 앱 리스트 읽기 (주석# 및 빈 줄 제외)
+      grep -v '^#' "$LIST_FILE" | grep -v '^$' | while read -r FULL_PATH; do
+        GROUP=$(echo $FULL_PATH | cut -d'/' -f1)
+        APP=$(echo $FULL_PATH | cut -d'/' -f2)
+
+        # 1. 타겟 앱 체크
+        if [ "$TARGET_APP" != "ALL" ] && [ "$TARGET_APP" != "$APP" ]; then
+          continue
+        fi
+
+        # 2. 그룹에 따른 토큰 선택 (핵심 로직)
+        case $GROUP in
+          "backend")
+            CURRENT_TOKEN=$BACKEND_TOKEN
+            ;;
+          "frontend")
+            CURRENT_TOKEN=$FRONTEND_TOKEN
+            ;;
+          *)
+            echo "!!! 알 수 없는 그룹 ($GROUP) 입니다. 건너뜁니다."
+            continue
+            ;;
+        esac
+
+        echo ">>> [$GROUP / $APP] Stage $LEVEL 적용 시도..."
+
+        # 3. 선택된 토큰으로 클론
+        # 토큰이 비어있는지 체크
+        if [ -z "$CURRENT_TOKEN" ]; then
+          echo "!!! 에러: ${GROUP}_TOKEN 변수가 설정되지 않았습니다."
+          exit 1
+        fi
+        git clone http://oauth2:${CURRENT_TOKEN}@${GIT_REGISTRY_URL}/${FULL_PATH}.git ${APP}_repo
+
+        # 4. 파일 교체 및 커밋
+        SOURCE_FILE="${APP}_repo/helm/scaling-stage${LEVEL}.yaml"
+        TARGET_FILE="${APP}_repo/helm/values-scaling-active.yaml"
+        
+        # 원본 파일 존재 여부 확인
+        if [ ! -f "$SOURCE_FILE" ]; then
+          echo "⚠️  경고: $APP 저장소에 stage$LEVEL 파일이 없습니다. 패스합니다."
+          rm -rf ${APP}_repo
+          continue
+        fi
+        cp "$SOURCE_FILE" "$TARGET_FILE"
+
+        cd ${APP}_repo
+        if [ -n "$(git status --porcelain)" ]; then
+          git add helm/values-scaling-active.yaml
+          git commit -m "chore(scaling): apply stage $LEVEL [skip ci]"
+
+          if [ "$DRY_RUN" == "true" ]; then
+            echo "--- DRY RUN 모드: $APP 의 변경사항을 출력만 합니다 ---"
+            git diff HEAD^ HEAD
+          else
+            echo "--- $APP 업데이트 사항 Push 중 (Token: $GROUP) ---"
+            git push origin HEAD:main
+          fi 
+        else
+          echo "--- $APP: 변경 사항 없음 ---"
+        fi
+        
+        cd ..
+        rm -rf ${APP}_repo
+        echo "-----------------------------------------------"
+      done

@@ -1,0 +1,33 @@
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Values.applicationName }}
+  labels:
+    app: {{ .Values.applicationName }}
+  {{- if .Values.ingress.className }}
+  annotations:
+    kubernetes.io/ingress.class: {{ .Values.ingress.className }}
+    konghq.com/preserve-host: "true"
+  {{- end }}
+spec:
+  rules:
+    {{- range .Values.ingress.hosts }}
+    - host: {{ .host }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            pathType: {{ .pathType }}
+            backend:
+              service:
+                name: {{ $.Values.applicationName }}
+                port:
+                  number: 80
+          {{- end }}
+    {{- end }}
+  {{- if .Values.ingress.tls }}
+  tls:
+    {{- toYaml .Values.ingress.tls | nindent 4 }}
+  {{- end }}
+{{- end }}

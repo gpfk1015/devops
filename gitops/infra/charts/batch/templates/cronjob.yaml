@@ -1,0 +1,53 @@
+{{- range .Values.jobs }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  annotations:
+    sidecar.istio.io/inject: "false"
+  name: "{{ $.Values.applicationName }}-{{ .name }}"
+  labels:
+    app: {{ $.Values.applicationName }}
+spec:
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          annotations:
+            sidecar.istio.io/inject: "false"
+        spec:
+          restartPolicy: Never
+          containers:
+          - name: {{ $.Values.applicationName }}
+            image: "{{ $.Values.image.repository }}:{{ $.Values.image.tag }}"
+            imagePullPolicy: {{ $.Values.image.pullPolicy }}
+            command:
+            - /bin/sh
+            - -c
+            - "{{ .command }}"
+            env:
+{{- range concat ($.Values.defaultEnv | default list) ($.Values.env  | default list) }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+{{- end }}
+
+{{- if $.Values.volumeMounts }}
+            volumeMounts:
+{{- range $.Values.volumeMounts }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+{{- end }}
+{{- end }}
+        
+{{- if $.Values.volumeMounts }}
+          volumes:
+{{- range $.Values.volumeMounts }}
+          - name: {{ .name }}
+            persistentVolumeClaim:
+              claimName: {{ .name }}
+{{- end }}
+{{- end }}
+
+  schedule: "{{ .schedule }}"
+  timeZone: Asia/Seoul
+{{- end }}

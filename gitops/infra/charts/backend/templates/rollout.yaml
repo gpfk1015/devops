@@ -1,0 +1,123 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: {{ .Values.applicationName }}
+  annotations:
+    argocd.argoproj.io/sync-options: ServerSideApply=true
+  labels:
+    app: {{ .Values.applicationName }}
+spec:
+{{ if not .Values.hpa.enabled}}
+  replicas: {{ .Values.replicaCount }}
+{{- end }}
+  #replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.applicationName }}
+
+  strategy:
+    canary:
+      steps:
+      # 1. 새 버전(Canary)으로 10% 트래픽 전송
+      - setWeight: 10
+      # 2. 1분간 대기 (ArgoCD UI에서 수동 'Promote'도 가능)
+      - pause: { duration: 1m }
+      # 3. 50% 트래픽 전송
+      - setWeight: 50
+      # 4. 1분 대기
+      - pause: { duration: 1m }
+      # (100% 전환은 마지막 단계 후 자동으로 이루어짐)
+
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.applicationName }}
+      annotations:
+        k8s.jennifersoft.com/apm-agent-config-id: {{ .Values.jennifer.key }}
+    spec:
+      terminationGracePeriodSeconds: 80
+      containers:
+      - name: {{ .Values.applicationName }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.service.port }}
+          protocol: TCP
+        env:
+{{- /*1. 중복을 제거하기 위한 빈 저장소(Dictionary) 생성*/}}
+{{- $envDict := dict -}}
+
+{{- /*2. 모든 리스트를 합쳐서 하나씩 저장소에 넣기(이름이 같으면 덮어씌움)*/ -}}
+{{- range (concat (.Values.defaultEnv | default list) (.Values.commonEnv  | default list) (.Values.env  | default list)) -}}
+  {{- if .name -}}
+    {{- $_ := set $envDict .name .value -}}
+  {{- end -}}
+{{- end -}}
+{{- /*3. 저장소를 순회하면서 env를 생성*/ -}}
+{{- range $name := $value := $envDict }}
+        - name: {{ $name }}
+          value: {{ $value | quote }}
+{{- end }}
+        # --- 평문으로 설정된 env 외에 secret으로 추가되는 env
+        {{- range .Values.secretEnv }}
+        - name: {{ .envName }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ .name }}
+              key: {{ .key }}
+        {{- end }}
+        startupProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: {{ .Values.service.port }}
+          failureThreshold: 30
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: {{ .Values.service.port }}
+          periodSeconds: 60
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: {{ .Values.service.port }}
+          periodSeconds: 60
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        resources:
+{{ toYaml .Values.resources | indent 10 }}
+{{- if .Values.volumeMounts }}
+        volumeMounts:
+{{- range .Values.volumeMounts }}
+        - name: {{ .name }}
+          mountPath: {{ .mountPath }}
+{{- end }}
+{{- if .Values.wasTrace }}
+        - name: was-trace-config-volume
+          mountPath: {{ .Values.wasTrace.mountPath }}   
+          subPath: settings.ini
+{{- end }}
+{{- end }}
+        
+{{- if .Values.volumeMounts }}
+      volumes:
+{{- range .Values.volumeMounts }}
+      - name: {{ .name }}
+        persistentVolumeClaim:
+          claimName: {{ .name }}
+{{- end }}
+{{- if .Values.wasTrace }}
+      - name: was-trace-config-volume
+        configMap:
+          name: {{ .Values.applicationName }}-was-trace-config
+{{- end }}  
+{{- end }}
+      nodeSelector:
+{{ toYaml .Values.nodeSelector | indent 8 }}
+      tolerations:
+{{ toYaml .Values.tolerations | indent 8 }}
+      affinity:
+{{ toYaml .Values.affinity | indent 8 }}

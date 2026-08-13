@@ -1,0 +1,14 @@
+# 노드 10개 기준 설정 (a-spring 집중 사용 기간)
+# - 스케일아웃 지연(Cold Start) 방지를 위해 파드 수 고정
+# - 가용 리소스 및 DB 커넥션 한계를 고려한 최대 안전 수치 적용
+resources:
+  requests:
+    cpu: "1000m"
+    memory: "3072Mi" #3G
+  limits:
+    memory: "5120Mi" #5G
+hpa:
+  enabled: true
+  minReplicas: 15
+  maxReplicas: 15
+  targetCPUUtilizationPercentage: 65

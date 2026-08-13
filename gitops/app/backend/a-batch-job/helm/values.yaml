@@ -1,0 +1,21 @@
+applicationName: aa-batch-cronjob
+image:
+  repository: <Registry URL>/administrator/a-batch
+  tag: prd-20260311_173308
+  pullPolicy: Always
+jobs:
+  - name: kafka-stat-job
+    schedule: "*/5 18-23,0-6 * * *"
+    command: "java -jar app.jar kafkaStatJob"
+  - name: behav-log-incremnet-job
+    schedule: "*/5 18-23,0-6 * * *"
+    command: "java -jar app.jar behavLogsIncrementJob"
+secretEnvs:
+	- envName: "SPRING_RW_DATASOURCE_PASSWORD"
+		name: "db-secret"
+		key: "db-password"
+env:
+  - name: SPRING_RW_DATASOURCE_URL
+    value: "jdbc:postgresql://<master ip>:<db port>/<database name>"
+  - name: SPRING_RW_DATASOURCE_USERNAME
+    value: "<db user>"

@@ -1,0 +1,151 @@
+# values.yaml
+global:
+  imagePullSecrets:
+    - name: harbor-secret
+
+# pod or service의 annotation을 보고 metrics 가져옴
+annotationAutodiscovery:
+  enabled: true
+
+cluster:
+  name: <ClusterName> # 중앙 Grafana에서 인식할 이 클러스터의 고유 이름 / 클러스터명으로 설정
+
+# 데이터가 전송될 관리(중앙) 클러스터의 엔드포인트 설정
+destinations:
+  mimir:
+    type: prometheus
+    url: http://mimir-nginx.mimir.svc.cluster.local/api/v1/push
+    # url: https://mimir.dev.re.kr/api/v1/push
+    # 인증이 필요한 경우 아래 주석을 해제하고 설정 (예: Basic Auth)
+    # auth:
+    #   username: "your-username"
+    #   password: "your-password"
+    
+    # [선택] 멀티테넌시(고객/팀별 데이터 분리)를 사용할 경우 헤더 추가
+    # 지정하지 않으면 Mimir Nginx 설정에 의해 자동으로 기본 테넌트(anonymous)로 들어갑니다.
+    tenantId: "dev"  # 그라파나에서 데이터소스 지정할때 헤더(X-Scope-OrgID) 추가 필요 / 검증,운영-kbf,kbb,kif,kib로 설정
+
+  loki:
+    type: loki
+    url: http://loki-gateway.loki.svc.cluster.local/loki/api/v1/push
+    #url: https://loki.dev.re.kr/loki/api/v1/push
+
+  tempo:
+    type: otlp
+    url: tempo-distributor.tempo.svc.cluster.local:4317
+    #url: tempo.dev.re.kr:4317 # gRPC 엔드포인트 (인그레스/LB 설정에 맞게 포트 수정)
+    tls:
+      insecure: true # 내부망이거나 TLS를 안 쓸 경우 true
+
+collectors:
+  alloy:
+    enabled: true # 메인 에이전트 활성화
+    presets:
+      - clustered # 클러스터 메트릭 수집을 위한 중복 수집 방지 기능 활성화
+      - filesystem-log-reader # 파드 로그 수집용(노드 /var/log/ 호스트 마운트)
+    # -------------------------------------------------------------
+    # 차트의 자동 수집 버그를 지우고 수동 파이프라인 코드 주입
+    # -------------------------------------------------------------
+    extraConfig: |
+      discovery.kubernetes "manual_node_exporters" {
+        role = "pod"
+        selectors {
+          role = "pod"
+          label = "app.kubernetes.io/name=node-exporter"
+        }
+      }
+
+      prometheus.scrape "manual_node_exporter_scrape" {
+        targets    = discovery.kubernetes.manual_node_exporters.targets
+        forward_to = [prometheus.remote_write.mimir.receiver]
+      }
+      
+      prometheus.scrape "Dev_VM" { // job 라벨
+        targets    = [
+          { "__address__" = "<VM_IP>:9100", "instance" = "<VM_HOSTNAME>" },
+          { "__address__" = "<VM_IP>:9100", "instance" = "<VM_HOSTNAME>" },
+          { "__address__" = "<VM_IP>:9100", "instance" = "<VM_HOSTNAME>" },
+        ]
+        forward_to = [prometheus.remote_write.mimir.receiver]
+      }
+    # -------------------------------------------------------------
+    image:
+      registry: <harbor repository_url>
+      repository: helm-images/alloy
+      tag: v1.16.1
+      pullSecrets:
+        - name: harbor-secret
+
+collectorCommon:
+  alloy:
+    configReloader:  #Alloy 설정(ConfigMap)이 바뀌면, Alloy를 재시작 없이 자동으로 반영해주는 감시/재적용 프로세스
+      image:
+        registry: <harbor repository_url>
+        repository: helm-images/prometheus-operator/prometheus-config-reloader
+        tag: v0.81.0
+        pullSecrets:
+          - name: harbor-secret  
+
+# 4. 메트릭(Mimir) 관련 기능 활성화
+clusterMetrics:
+  enabled: true  # 쿠버네티스 클러스터 메트릭 활성화
+  
+#차트 고장난 자동화는 꺼버리고 수동(extraConfig)으로 긁을 예정
+hostMetrics:
+  enabled: false  # 노드 하드웨어 메트릭 비활성화
+integrations:
+  enabled: true
+
+# 5. 로그(Loki) 관련 기능 활성화 
+podLogsViaLoki:
+  enabled: true  # 기존 Promtail 역할을 하는 파드 로그 수집 활성화
+clusterEvents:
+  enabled: true  # 쿠버네티스 클러스터 이벤트 로그 수집 활성화
+
+# 6. 트레이스(Tempo) 관련 기능 활성화 
+applicationObservability:
+  enabled: true  # 앱 관찰성 파이프라인 활성화
+  receivers:
+    otlp:
+      grpc:
+        enabled: true  # 4317 포트 오픈
+      http:
+        enabled: true  # 4318 포트 오픈
+    zipkin:
+      enabled: true   # 9411 포트 오픈
+
+# 7. 메트릭을 실제로 추출해 줄 하위 도구(Exporter) 배포 정의
+telemetryServices:
+  kube-state-metrics:
+    deploy: true  # KSM 배포 활성화 (clusterMetrics가 이 데이터를 사용)
+    image:
+      registry: <harbor repository_url>
+      repository: helm-images/kube-state-metrics/kube-state-metrics
+      tag: v2.18.0
+    imagePullSecrets:
+      - name: harbor-secret
+  node-exporter:
+    deploy: true  # 노드 엑스포터 배포 활성화 (hostMetrics가 이 데이터를 사용)
+    image:
+      registry: <harbor repository_url>
+      repository: helm-images/prometheus/node-exporter
+      tag: v1.11.1
+    imagePullSecrets:
+      - name: harbor-secret
+
+# 매니저(오퍼레이터) 및 훅 툴의 내부 이미지 경로 오버라이드
+alloy-operator:
+  deploy: true
+  image:
+    registry: <harbor repository_url>
+    repository: helm-images/grafana/alloy-operator
+    tag: 1.8.1
+  imagePullSecrets:
+    - name: harbor-secret
+  waitForAlloyRemoval:
+    image:
+      registry: <harbor repository_url>
+      repository: helm-images/grafana/helm-chart-toolbox-kubectl
+      tag: 0.1.2
+      pullSecrets:
+        - name: harbor-secret

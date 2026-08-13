@@ -1,0 +1,8 @@
+image:
+  repository: <DR Git Reository URL>:/administrator/frontend-ba-nb
+hpa:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 1
+  targetCPUUtilizationPercentage: 60
+  targetMemoryUtilizationPercentage: 75

@@ -1,0 +1,114 @@
+applicationName: backend-app
+
+image:
+  repository: mycompany/springboot-app
+  tag: latest
+  pullPolicy: Always
+
+jobs:
+  - name: ""
+    schedule: ""
+    command: ""
+
+volumeMounts:
+  - name: media-store
+    mountPath: /nas
+
+defaultEnv:
+  - name: SPRING_RO_DATASOURCE_URL
+    value: "postgresql://<POSTGRES_HOST>:<db port>/dadnp"
+  - name: SPRING_RO_DATASOURCE_USERNAME
+    value: "<SPRING_RO_DATASOURCE_USERNAME>"
+  - name: SPRING_RO_DATASOURCE_PASSWORD
+    value: "<SPRING_RO_DATASOURCE_PASSWORD>"
+  - name: SPRING_RO_DATASOURCE_MAXIMUMPOOLSIZE
+    value: "10"
+  - name: SPRING_RO_DATASOURCE_MINIMUMIDLE
+    value: "10"
+  - name: SPRING_RW_DATASOURCE_URL
+    value: "postgresql://<POSTGRES_HOST>:<db port>/dadnp"
+  - name: SPRING_RW_DATASOURCE_USERNAME
+    value: "<SPRING_RW_DATASOURCE_USERNAME>"
+  - name: SPRING_RW_DATASOURCE_PASSWORD
+    value: "<SPRING_RW_DATASOURCE_PASSWORD>"
+  - name: SPRING_RW_DATASOURCE_MAXIMUMPOOLSIZE
+    value: "10"
+  - name: SPRING_RW_DATASOURCE_MINIMUMIDLE
+    value: "10"
+  - name: SPRING_DATASOURCE_CONNECTIONTIMEOUT
+    value: "30000"
+  - name: SPRING_DATASOURCE_IDLETIMEOUT
+    value: "600000"
+  - name: SPRING_DATASOURCE_MAXLIFETIME
+    value: "1800000"
+  - name: SPRING_DATASOURCE_VALIDATIONTIMEOUT
+    value: "5000"
+  - name: SPRING_DATASOURCE_LEAKDETECTIONTHRESHOLD
+    value: "60000"
+  - name: REDIS_HOST
+    value: "<REDIS_HOST_IP>"
+  - name: REDIS_PORT
+    value: "<REDIS_PORT>"
+  - name: REDIS_PASSWORD
+    value: "<REDIS_PASSWORD>"
+  - name: REDIS_TIMEOUT
+    value: "2000"
+  - name: REDIS_DATABASE
+    value: "0"
+  - name: REDIS_LETTUCE_POOL_MAXACTIVE
+    value: "8"
+  - name: REDIS_LETTUCE_POOL_MAXIDLE
+    value: "8"
+  - name: REDIS_LETTUCE_POOL_MINIDLE
+    value: "0"
+  - name: REDIS_LETTUCE_POOL_MAXWAIT
+    value: "-1ms"
+  - name: REDIS_LISTENER_TASKPOOL_COREPOOLSIZE
+    value: "1"
+  - name: REDIS_LISTENER_TASKPOOL_MAXPOOLSIZE
+    value: "5"
+  - name: REDIS_LISTENER_TASKPOOL_KEEPALIVESECONDS
+    value: "60"
+  - name: REDIS_LISTENER_TASKPOOL_QUEUECAPACITY
+    value: "20"
+  - name: SPRING_PROFILES_ACTIVE
+    value: "prod"
+  - name: JWT_SECRET
+    value: "secret"
+  - name: JWT_EXPIRATION
+    value: "3600"
+  # - name: COOKIE_DOMAIN
+  #   value: ""
+  # - name: KAFKA_BOOTSTRAP_SERVERS
+  #   value: ""
+  # - name: KAFKA_CLIENT_ID
+  #   value: ""
+  # - name: KAFKA_GROUP_ID
+  #   value: ""
+  - name: ZIPKIN_BASEURL
+    value: "<alloy-operator ip>:9411"
+  - name: SLEUTH_SAMPLER_PROBABILITY
+    value: "1.0"
+  - name: DATASOURCE_META_DRIVER
+    value: "org.postgresql.Driver"
+  - name: DATASOURCE_META_URL
+    value: "jdbc:postgresql://<POSTGRES_HOST>:<db port>/dadnp"
+  - name: DATASOURCE_META_USERNAME
+    value: "<DATASOURCE_META_USERNAME>"
+  - name: DATASOURCE_META_PASSWORD
+    value: "<DATASOURCE_META_PASSWORD>"
+  - name: DATASOURCE_META_POOL_NAME
+    value: "meta-pool"
+  - name: DATASOURCE_META_MAX_POOL_SIZE
+    value: "20"
+  - name: DATASOURCE_META_MIN_IDLE
+    value: "2"
+  - name: DATASOURCE_META_IDLE_TIMEOUT
+    value: "600000"
+  - name: DATASOURCE_META_MAX_LIFETIME
+    value: "1800000"
+  - name: DATASOURCE_META_CONN_TIMEOUT
+    value: "30000"
+  - name: DATASOURCE_META_AUTO_COMMIT
+    value: "true"
+

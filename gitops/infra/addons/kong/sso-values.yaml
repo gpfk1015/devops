@@ -1,0 +1,74 @@
+replicaCount: 3
+
+deployment:
+  kong:
+    daemonset: false
+    enabled: true
+  userDefinedVolumeMounts:    # ✅ deployment 레벨에 있으면
+  - mountPath: /custom-error   # ✅ Kong Pod에 마운트됨
+    name: error-template
+    readOnly: true
+  userDefinedVolumes:
+  - configMap:
+      name: kong-error-template
+    name: error-template
+
+env:
+  error_template_html: /custom-error/error.html
+  database: "off"
+  log_level: info
+  trusted_ips: "0.0.0.0/0,::/0"
+  real_ip_recursive: "on"
+  real_ip_header: "X-Forwarded-For"
+  NGINX_PROXY_PROXY_BUFFER_SIZE: "160k"
+  NGINX_PROXY_PROXY_BUFFERS: "64 160k"
+
+# 메트릭/상태 점검 설정
+status: 
+  enabled: true
+  http:
+    enabled: true
+    containerPort: 8100   # metrics port
+
+# alloy가 metrics 수집할 수 있도록 Pod가 생성될 때 주석 주입
+podAnnotations:
+  k8s.grafana.com/scrape: "true"
+  k8s.grafana.com/metrics.portNumber: "8100"
+  k8s.grafana.com/metrics.path: "/metrics"
+
+fullnameOverride: "sso-kong"
+
+image:
+  repository: <harbor repository_url>/library/kong
+  tag: "3.9"
+  pullPolicy: IfNotPresent
+
+proxy:
+  enabled: true
+  type: LoadBalancer
+  http:
+    enabled: true
+    nodePort: 32376
+    # parameters:
+    #   - proxy_protocol
+  # https:
+  #   enabled: true
+  #   nodePort: 32373
+    # parameters:
+    #   - proxy_protocol
+  tls:
+    enabled: true
+    nodePort: 32377
+    # parameters:
+    #   - proxy_protocol
+
+ingressController:
+  enabled: true
+  ingressClass: sso
+  # installCRDs: true
+  # ingressClassAnnotations:
+  #  ingressclass.kubernetes.io/is-default-class: "true"
+  image:
+    repository: <harbor repository_url>/library/kong/kubernetes-ingress-controller
+    tag: "3.5"
+    pullPolicy: IfNotPresent

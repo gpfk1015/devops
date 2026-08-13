@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sonarqube-minimal
+  namespace: sonarqube
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sonarqube-minimal
+  template:
+    metadata:
+      labels:
+        app: sonarqube-minimal
+    spec:
+      containers:
+      - env:
+        - name: SONAR_JDBC_URL
+          value: jdbc:postgresql://postgres-service:<db port>/sonar
+        - name: SONAR_JDBC_USERNAME
+          value: sonar
+        - name: SONAR_JDBC_PASSWORD
+          value: sonar
+        image: <harbor repository_url>/gitlab-ci/sonar:25.10.0.114319-community				
+        imagePullPolicy: IfNotPresent
+        name: sonarqube
+        ports:
+        - containerPort: 9000
+          protocol: TCP
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /opt/sonarqube/data
+          name: data-storage
+        - mountPath: /opt/sonarqube/extensions
+          name: extensions-storage
+        - mountPath: /opt/sonarqube/logs
+          name: logs-storage
+      dnsPolicy: ClusterFirst
+      imagePullSecrets:
+      - name: harbor-secret
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: data-storage
+        persistentVolumeClaim:
+          claimName: sonarqube-data-pvc
+      - name: extensions-storage
+        persistentVolumeClaim:
+          claimName: sonarqube-extensions-pvc
+      - name: logs-storage
+        persistentVolumeClaim:
+          claimName: sonarqube-log-pvc

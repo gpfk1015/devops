@@ -1,0 +1,97 @@
+USER-SUPPLIED VALUES: null
+configs:
+  cm:
+    resource.customizations: "networking.k8s.io/Ingress:\n  health.lua: |\n    hs
+      = {}\n    hs.status = \"Healthy\"\n    return hs      \n"
+    resource.customizations.health.argoproj.io_Application: "hs = {}\nhs.status =
+      \"Progressing\"\nhs.message = \"\"\n\nif obj.status ~= nil then\n  if obj.status.health
+      ~= nil then\n    hs.status = obj.status.health.status\n    if obj.status.health.message
+      ~= nil then\n      hs.message = obj.status.health.message\n    end\n  end\nend\nreturn
+      hs           \n"
+  credentialTemplates:
+    github-creds:
+      password: <github personal access token>
+      url: https://github.com
+      username: <username>
+  params:
+    server.disable.auth: false
+    server.insecure: true
+  repositories:
+    harbor-repo:
+      enableOCI: "true"
+      name: harbor-repo
+      password: <harbor password>
+      type: helm
+      url: <harbor repository_url> # http프로토콜 제외한 url
+      username: <harbor username>
+  tls:
+    certificates:
+      ca.crt: |
+        -----BEGIN CERTIFICATE-----
+        ......
+        -----END CERTIFICATE-----
+crds:
+  install: true
+  keep: true
+dex:
+  image:
+    repository: <harbor repository_url>/helm-images/dex
+    tag: v2.43.1
+fullnameOverride: argocd
+global:
+  image:
+    repository: <harbor repository_url>/helm-images/argocd
+    tag: v3.0.9
+  imagePullSecrets:
+  - name: harbor-secret
+  nodeSelector: {}
+redis:
+  image:
+    repository: <harbor repository_url>/helm-images/redis
+    tag: 7.2.4-alpine
+repoServer:
+  initContainers:
+  - args:
+    - "# /custom-ca-certificates/ca.crt 파일이 존재하는지 먼저 확인합니다.\nif [ -f \"/custom-ca-certificates/ca.crt\"
+      ]; then\n  # 파일이 존재할 경우에만 이 블록을 실행합니다.\n  # set -e는 이 블록 안에서만 유효하게 하여, CA 작업
+      중 실패 시 중단하도록 합니다.\n  set -e\n  echo \"Custom CA certificate found. Starting
+      update process...\"\n  \n  echo \"--- Verifying source file ---\"\n  ls -l /custom-ca-certificates/ca.crt\n
+      \ \n  echo \"--- Copying custom CA ---\"\n  cp /custom-ca-certificates/*.crt
+      /usr/local/share/ca-certificates/\n  \n  echo \"--- Updating system CA store
+      ---\"\n  update-ca-certificates\n  \n  echo \"--- Copying updated CA store to
+      shared volume ---\"\n  # /tmp/shared-certs 디렉토리가 없으면 생성합니다.\n  mkdir -p /tmp/shared-certs\n
+      \ cp /etc/ssl/certs/ca-certificates.crt /tmp/shared-certs/\n  \n  echo \"Custom
+      CA update process completed successfully.\"\nelse\n  # 파일이 존재하지 않으면, 이 메시지만
+      출력하고 스크립트는 성공으로 종료됩니다.\n  echo \"Custom CA certificate not found, skipping update.\"\nfi\n"
+    command:
+    - /bin/sh
+    - -c
+    image: <harbor repository_url>/helm-images/argocd:v3.0.9
+    name: install-custom-ca
+    securityContext:
+      runAsNonRoot: false
+      runAsUser: 0
+    volumeMounts:
+    - mountPath: /custom-ca-certificates
+      name: custom-ca-certs-from-cm
+      readOnly: true
+  volumes:
+  - configMap:
+      name: argocd-tls-certs-cm
+    name: custom-ca-certs-from-cm
+  - emptyDir: {}
+    name: shared-ssl-certs
+server:
+  ingress:
+    annotations:
+      cert-manager.io/cluster-issuer: ca-clusterissuer
+    controller: generic
+    enabled: true
+    hostname: argocd.dev.re.kr
+    ingressClassName: default
+    path: /
+    tls: true
+  service:
+    nodePortHttp: 30083
+    nodePortHttps: 30446
+    type: NodePort

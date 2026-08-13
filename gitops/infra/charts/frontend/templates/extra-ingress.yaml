@@ -1,0 +1,30 @@
+{{- if .Values.extraIngress}}
+{{- range .Values.extraIngress }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $.Values.applicationName }}-{{ .className }}-{{ .name }}
+  labels:
+    app: {{ $.Values.applicationName }}
+  annotations:
+    kubernetes.io/ingress.class: {{ .className }}
+    konghq.com/plugins: {{ .name }}-plugin
+spec:
+  rules:
+    {{- range .hosts }}
+    - host: "{{ .host }}"
+      http:
+        paths:
+          {{- range .paths }}
+          - path: "{{ .path }}"
+            pathType: {{ .pathType }}
+            backend:
+              service:
+                name: {{ $.Values.applicationName }}
+                port:
+                  number: {{ $.Values.service.port }}
+          {{- end }}
+    {{- end }}
+{{- end }}
+{{- end }}

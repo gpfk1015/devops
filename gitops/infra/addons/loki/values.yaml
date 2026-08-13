@@ -1,0 +1,164 @@
+USER-SUPPLIED VALUES:
+# 테스트 로그(기본값: true)
+# lokiCanary:
+#   enabled: false
+backend:
+  replicas: 0
+bloomCompactor:
+  replicas: 0
+bloomGateway:
+  replicas: 0
+compactor:
+  extraArgs:
+  - -config.expand-env=true
+  extraEnv:
+  - name: MY_POD_IP
+    valueFrom:
+      fieldRef:
+        fieldPath: status.podIP
+  replicas: 3
+  extraVolumes:
+    - name: compactor-workspace
+      emptyDir:
+        sizeLimit: 10Gi # 아무리 용량이 튀어도 노드 디스크를 최대 10GB까지만 쓰도록 제한 (환경에 맞게 조절 가능)
+  extraVolumeMounts:
+    - name: compactor-workspace
+      mountPath: /var/loki/compactor   # working_directory 경로
+deploymentMode: Distributed
+distributor:
+  extraArgs:
+  - -config.expand-env=true
+  extraEnv:
+  - name: MY_POD_IP
+    valueFrom:
+      fieldRef:
+        fieldPath: status.podIP
+  maxUnavailable: 1
+  replicas: 3
+gateway:
+  ingress:
+    annotations:
+      cert-manager.io/cluster-issuer: ca-clusterissuer
+    enabled: true
+    hosts:
+    - host: loki.dev.re.kr
+      paths:
+      - path: /
+        pathType: Prefix
+    ingressClassName: default
+    tls:
+    - hosts:
+      - loki.dev.re.kr
+      secretName: loki-server-tls
+  maxUnavailable: 1
+  replicas: 3
+global:
+  image:
+    registry: <harbor repository_url>/helm-images
+  imagePullSecrets:
+  - harbor-secret
+indexGateway:
+  maxUnavailable: 1
+  replicas: 3
+ingester:
+  extraArgs:
+  - -config.expand-env=true
+  extraEnv:
+  - name: MY_POD_IP
+    valueFrom:
+      fieldRef:
+        fieldPath: status.podIP
+  replicas: 3
+loki:
+  auth_enabled: false
+  env:
+  - name: MY_POD_IP
+    valueFrom:
+      fieldRef:
+        fieldPath: status.podIP
+  extraArgs:
+  - -config.expand-env=true
+  ingester:
+    chunk_encoding: snappy
+  querier:
+    max_concurrent: 3
+  schemaConfig:
+    configs:
+    - from: "2024-04-01"  # 배포일자보다 전이면 됨
+      index:
+        period: 24h
+        prefix: loki_index_
+      object_store: s3
+      schema: v13
+      store: tsdb
+  storage:
+    bucketNames:    # kt 오브젝트 스토리지 버킷
+      admin: dev-loki
+      chunks: dev-loki
+      ruler: dev-loki
+    s3:
+      accessKeyId: <s3_access_key>
+      endpoint: https://obj-g-1.ktcloud.com
+      http_config:
+        insecure_skip_verify: true
+      insecure: false
+      s3ForcePathStyle: true
+      secretAccessKey: <s3_secret_key>
+    type: s3
+  structuredConfig:
+    compactor:
+      compaction_interval: 10m     # 컴팩션 작업 주기(기본값)
+      retention_enabled: true      # 보관 주기 기능 활성화
+      retention_delete_delay: 2h   # 삭제 마크가 찍힌 후 실제 S3에서 지우기까지 대기 시간
+      retention_delete_worker_count: 50 # 삭제 작업을 수행할 워커 수  (하루에 수백GB 쌓이는 대규모는 100~150의 높은 수로 설정 / 소~중: 20~50 추천)   
+      delete_request_store: s3     # 삭제 요청 내역 저장 위치
+      working_directory: /var/loki/compactor     # compactor 작업 디렉터리
+    limits_config:
+      retention_period: 90d     # 로그 보관 기간
+      # 한 번에 가져올 수 있는 최대 로그 라인 수 (기본값 5000)
+      max_entries_limit_per_query: 50000
+      # 쿼리 병렬 처리 (Loki 분산 아키텍처에서 조회를 얼마나 쪼개서 동시 처리할 것인가)
+      max_query_parallelism: 32    # (기본값)
+      # 한 라인의 최대 크기 (기본값 단위를 넘는 긴 Java Stack Trace나 JSON 로그 유실 방지)
+      max_line_size: 5mb
+      max_line_size_truncate: true    # 설정 크기를 넘어가면 버리지 않고 자르고 저장
+      # 1일 최대 쿼리 범위 제한 (보관주기가 30일이더라도 한 번에 30일치를 조회하면 Loki가 뻗으므로 제한)
+      max_query_lookback: 30d
+      # 초당 로그 수집 속도 제한 해제 (기본값은 보통 4MB~6MB로 매우 낮음)
+      ingestion_rate_mb: 20           # 테넌트당 초당 최대 20MB 수집 허용
+      ingestion_burst_size_mb: 40     # 순간 트래픽 폭주 시 최대 40MB까지 허용
+  tracing:
+    enabled: true
+memcached:
+  image:
+    repository: <harbor repository_url>/helm-images/memcached
+memcachedExporter:
+  image:
+    repository: <harbor repository_url>/helm-images/memcached-exporter
+minio:
+  enabled: false
+querier:
+  extraArgs:
+  - -config.expand-env=true
+  extraEnv:
+  - name: MY_POD_IP
+    valueFrom:
+      fieldRef:
+        fieldPath: status.podIP
+  maxUnavailable: 1
+  replicas: 3
+queryFrontend:
+  maxUnavailable: 1
+  replicas: 3
+queryScheduler:
+  replicas: 3
+read:
+  replicas: 0
+serviceAccount:
+  create: true
+  imagePullSecrets:
+  - name: harbor-secret
+singleBinary:
+  replicas: 0
+write:
+  replicas: 0

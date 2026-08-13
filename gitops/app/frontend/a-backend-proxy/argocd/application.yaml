@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: basics-backend-proxy
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: http://<Git Repository URL>/frontend/basics-backend-proxy.git
+    targetRevision: HEAD
+    path: helm
+  destination:
+    server: https://<destination server ip>:6443
+    namespace: Namespace_A
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

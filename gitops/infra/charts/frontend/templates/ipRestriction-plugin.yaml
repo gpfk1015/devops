@@ -1,0 +1,16 @@
+{{- range .Values.ingress }}
+{{- if .ipRestriction }}
+{{- if .ipRestriction.config }}
+---
+apiVersion: configuration.konghq.com/v1
+kind: KongPlugin
+metadata:
+  name: {{ .ipRestriction.pluginName }}
+  labels:
+    app: {{ $.Values.applicationName }}
+plugin: ip-restriction
+config:
+  {{- toYaml .ipRestriction.config | nindent 2 }}
+{{- end }}
+{{- end }}
+{{- end }}

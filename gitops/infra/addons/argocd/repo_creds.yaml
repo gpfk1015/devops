@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: dev-creds
+  namespace: argocd
+  labels:
+    argocd.argoproj.io/secret-type: repo-creds 
+stringData:
+  type: git
+  url: <git repository_url>
+  username: oauth2
+  password: <gitlab personal access token> # gitlab 그룹에 대한 토큰을 생성 시 그룹 내에 있는 모든 프로젝트에 대한 접근 권한을 부여할 수 있음

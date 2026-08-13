@@ -1,0 +1,60 @@
+{{- if .Values.wwwPlugin }}
+apiVersion: configuration.konghq.com/v1
+kind: KongPlugin
+metadata:
+  name: www-redirect-plugin
+plugin: pre-function
+config:
+  access:
+    - |
+      local host = kong.request.get_header("Host")
+
+      if host and not host:match("^www%.") and host == "test.re.kr" then
+        local scheme = "https"
+        local path = kong.request.get_path_with_query()
+        local new_url = scheme .. "://www." .. host .. path
+
+        return kong.response.exit(301, "", {
+          ["Location"] = new_url
+        })
+      end
+{{- end }}
+# local scheme = kong.request.get_header("x-forwarded-proto") or "https"
+---
+{{- if .Values.RobotsPlugin }}
+apiVersion: configuration.konghq.com/v1
+kind: KongPlugin
+metadata:
+  name: robots-plugin
+  namespace: <namespace>
+config:
+  status_code: 200
+  content_type: "text/plain"
+  body: |
+    User-agent: Googlebot
+    Disallow: /portal/communication/notice
+    Disallow: /portal/communication/faq
+    Disallow: /portal/communication/inquiry
+
+    User-agent: *
+    Allow: /
+plugin: request-termination
+
+{{- end }}
+---
+{{- if .Values.rootInaeaPlugin }}
+apiVersion: configuration.konghq.com/v1
+kind: KongPlugin
+metadata:
+  name: root-portal-plugin
+  namespace: <namespace>
+plugin: request-termination
+config:
+  status_code: 200
+  content_type: text/html; charset=utf-8
+  body: |
+    <!DOCTYPE html>
+    <html lang="ko">
+      <!-- 웹사이트의 부하를 줄이기 위해 임시로 생성한 대문페이지 / 메인 페이지에 접속하지 않고 다른 페이지로 이동하게 하여 부하를 줄임(ex. 국세청 홈텍스)-->
+    </html>
+{{- end }}

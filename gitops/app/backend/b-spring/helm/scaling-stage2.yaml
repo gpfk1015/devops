@@ -1,0 +1,12 @@
+# 노드 5개 기준 설정
+resources:
+  requests:
+    cpu: "1000m"
+    memory: "3072Mi" #3G
+  limits:
+    memory: "5120Mi" #5G
+hpa:
+  enabled: true
+  minReplicas: 6
+  maxReplicas: 6
+  targetCPUUtilizationPercentage: 65

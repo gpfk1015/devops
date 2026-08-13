@@ -1,0 +1,94 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: docker
+  name: docker-deployment
+  namespace: gitlab-runner
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: docker
+  template:
+    metadata:
+      labels:
+        app: docker
+    spec:
+      containers:
+      - args:
+        - --insecure-registry=<harbor repository_url>
+        - --insecure-registry=<harbor prod repository_url>
+        env:
+        - name: DOCKER_TLS_CERTDIR
+        - name: DOCKER_DRIVER
+          value: overlay2
+        image: docker:20.10-dind
+        imagePullPolicy: IfNotPresent
+        name: docker-dind
+        ports:
+        - containerPort: 2375
+          protocol: TCP
+        resources:
+          limits:
+            memory: 6Gi
+          requests:
+            cpu: "2"
+            memory: 2Gi
+        securityContext:
+          privileged: true
+          procMount: Default
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /etc/docker/certs.d/<harbor repository_url>/
+          name: harbor-cert-volume
+          readOnly: true
+        - mountPath: /etc/docker/certs.d/<harbor prod repository_url>/
+          name: harbor-prod-cert-volume
+          readOnly: true
+      dnsPolicy: ClusterFirst
+      initContainers:
+      - args:
+        - -c
+        - |
+          apk add --no-cache ca-certificates
+          cp /tmp/harbor-cert/ca.crt /usr/local/share/ca-certificates/harbor.crt
+          cp /tmp/harbor-prod-cert/ca.crt /usr/local/share/ca-certificates/harbor-prod.crt
+          update-ca-certificates
+        command:
+        - /bin/sh
+        image: alpine:3.18
+        imagePullPolicy: IfNotPresent
+        name: setup-ca-certs
+        resources: {}
+        securityContext:
+          runAsUser: 0
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /tmp/harbor-cert
+          name: harbor-cert-volume
+          readOnly: true
+        - mountPath: /tmp/harbor-prod-cert
+          name: harbor-prod-cert-volume
+          readOnly: true
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: harbor-cert-volume
+        secret:
+          defaultMode: 420
+          items:
+          - key: ca.crt
+            path: ca.crt
+          secretName: harbor-ca-cert
+      - name: harbor-prod-cert-volume
+        secret:
+          defaultMode: 420
+          items:
+          - key: ca.crt
+            path: ca.crt
+          secretName: harbor-prod-ca-cert

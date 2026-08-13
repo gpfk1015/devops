@@ -1,0 +1,47 @@
+services:
+  - name: synapdoc
+    host: "service-a.com"
+    path: "/SynapDocViewServer"
+    target: "synapdoc.external"
+    port: 80
+  - name: smartform
+    host: "service-a.com"
+    path: "/CreateServer"
+    target: "smartform.external"
+    port: 80
+    timeout: "300000"
+  - name: dataserver
+    host: "service-a.com"
+    path: "/DataServer"
+    target: "smartform.external"
+    port: 80
+  - name: infotalkserver
+    host: "service-a.com"
+    path: "/InfoTalkServer"
+    target: "smartform.external"
+    port: 80
+  - name: epki-bcert-8080
+    host: "service-a.com"
+    path: "/bcert"
+    target: "epki.external"
+    port: 8080
+  - name: epki-epki-8080
+    host: "service-a.com"
+    path: "/EPKI"
+    target: "epki.external"
+    port: 8080
+  - name: epki-gpkisecurewebhtml-8080
+    host: "service-a.com"
+    path: "/GPKISecureWebHTML"
+    target: "epki.external"
+    port: 8080
+  - name: epki-kcase-8080
+    host: "service-a.com"
+    path: "/kcase"
+    target: "epki.external"
+    port: 8080
+  - name: epki-okcert-8080
+    host: "service-a.com"
+    path: "/bOkCert"
+    target: "epki.external"
+    port: 8080

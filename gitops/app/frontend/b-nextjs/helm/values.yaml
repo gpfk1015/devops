@@ -1,0 +1,103 @@
+applicationName: frontend-inaea-ad-ap
+replicaCount: 3
+image:
+  repository: <Registry URL>/administrator/frontend-ad-ap
+  tag: prd-20260416_184005
+  pullPolicy: IfNotPresent
+service:
+  port: 3001
+resources:
+  requests:
+    cpu: "550m"
+    memory: "1536Mi" #1.5G
+  limits:
+    memory: "2304Mi" #2.25G
+hpa:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 8
+  targetCPUUtilizationPercentage: 60
+  targetMemoryUtilizationPercentage: 75
+ingress:
+  - className: default
+    hosts:
+      - host: "service-b.com
+        paths:
+          - path: "/portal"
+            pathType: Prefix
+      - host: "service-b.com
+        paths:
+          - path: "/"
+            pathType: Prefix
+    ipRestriction:
+      pluginName: "ad-ap-ip-restriction-default"
+      config:
+        deny:
+          - "1.244.126.242"
+          - "211.244.216.198"
+          - "1.244.63.36"
+          - "1.244.63.49"
+  - className: mgmt
+    hosts:
+      - host: "service-b.com
+        paths:
+          - path: "/portal"
+            pathType: Prefix
+      - host: "service-b.com
+        paths:
+          - path: "/"
+            pathType: Prefix
+            # ipRestriction:
+            #   pluginName: "ad-ap-ip-restriction"
+            #   config:
+            #     deny:
+            #       - "172.30.16.58" # VPN IP
+            #       - "210.124.3.50"
+### extraIngress template 사용하는 변수 ###
+wwwinaeaSharedPlugin: true
+inaeaRobotsPlugin: true
+rootInaeaPlugin: true
+extraIngress:
+  - className: default
+    name: "www-redirect"
+    hosts:
+      - host: "inaea.re.kr"
+        paths:
+          - path: "/portal"
+            pathType: Prefix
+          - path: "/"
+            pathType: Prefix
+  - className: mgmt
+    name: "www-redirect"
+    hosts:
+      - host: "inaea.re.kr"
+        paths:
+          - path: "/portal"
+            pathType: Prefix
+          - path: "/"
+            pathType: Prefix
+  - className: default
+    name: "robots"
+    hosts:
+      - host: "service-b.com
+        paths:
+          - path: "/robots.txt"
+            pathType: Exact
+  - className: mgmt
+    name: "robots"
+    hosts:
+      - host: "service-b.com
+        paths:
+          - path: "/robots.txt"
+            pathType: Exact
+            # 평가기간 대문페이지
+            # - className: default
+            #   name: "root-portal"
+            #   hosts:
+            #     - host: "service-b.com
+            #       paths:
+            #         - path: "/"
+            #           pathType: Exact
+env:
+  - name: OTEL_SERVICE_NAME
+    value: "frontend-inaea-ad-ap"

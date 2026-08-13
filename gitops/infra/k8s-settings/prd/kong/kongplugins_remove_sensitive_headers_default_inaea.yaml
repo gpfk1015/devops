@@ -1,0 +1,21 @@
+apiVersion: configuration.konghq.com/v1
+kind: KongClusterPlugin
+metadata:
+  name: remove-sensitive-headers-default
+  namespace: Namespace_B
+  annotations:
+    kubernetes.io/ingress.class: default
+    konghq.com/tags: ''  
+  labels:
+    global: "true"
+plugin: response-transformer
+config:
+  remove:
+    headers:
+      - x-powered-by
+      - x-envoy-upstream-service-time
+      - server
+      - x-nextjs-cache
+      - x-nextjs-prerender
+      - x-nextjs-stale-time
+      - vary

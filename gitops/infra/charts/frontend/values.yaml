@@ -1,0 +1,57 @@
+applicationName: nextjs-app
+
+replicaCount: 3
+
+image:
+  repository: mycompany/nextjs-app
+  tag: latest
+  pullPolicy: Always
+
+service:
+  type: ClusterIP
+  port: 3000
+  bluegreen: true
+
+# 각 app에서 설정 함
+# ingress:
+#   enabled: true
+#   className: "default"
+#   hosts:
+#     - host: nextjs-app.local
+#       paths:
+#         - path: /
+#           pathType: Prefix
+#   tls: []
+
+resources:
+  requests:
+    cpu: "550m"
+    memory: "1536Mi" #1.5G
+  limits:
+    memory: "2304Mi" # 2.25GiB
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+hpa:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 60
+  targetMemoryUtilizationPercentage: 75
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 30
+    scaleDown:
+      stabilizationWindowSeconds: 300
+
+defaultEnv:
+  - name: NODE_ENV
+    value: production
+  - name: ZIPKIN_ENDPOINT
+    value: "<alloy-operator ip>:9411/api/v2/spans"
+  - name: OTEL_PROPAGATORS
+    value: "tracecontext,b3multi"
+  - name: OTEL_TRACES_EXPORTER
+    value: "zipkin" 

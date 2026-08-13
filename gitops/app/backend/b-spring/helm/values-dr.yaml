@@ -1,0 +1,35 @@
+image:
+  repository: <DR Git Reository URL>:/administrator/b-spring
+hpa:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 1
+  targetCPUUtilizationPercentage: 65
+secretEnvs:
+	- envName: "SPRING_RO_DATASOURCE_PASSWORD"
+		name: "db-secret"
+		key: "db-password"
+	- envName: "SPRING_RW_DATASOURCE_PASSWORD"
+		name: "db-secret"
+		key: "db-password"
+env:
+  - name: SPRING_RO_DATASOURCE_URL
+    value: "jdbc:postgresql://<slave ip>:<db port>,<master ip>:<db port>/dadnp?targetServerType=preferSecondary&tcpKeepAlive=true&connectTimeout=5&socketTimeout=30&ApplicationName=b-spring"
+  - name: SPRING_RO_DATASOURCE_USERNAME
+    value: "<db user>"
+  - name: SPRING_RW_DATASOURCE_URL
+    value: "jdbc:postgresql://<master ip>:<db port>,<slave ip>:<db port>/dadnp?targetServerType=primary&tcpKeepAlive=true&connectTimeout=5&socketTimeout=30&ApplicationName=b-spring"
+  - name: SPRING_RW_DATASOURCE_USERNAME
+    value: "<db user>"
+  - name: SPRING_RW_DATASOURCE_PASSWORD
+    value: "<db password>"
+  - name: JAVA_TOOL_OPTIONS
+    value: "-XX:InitialRAMPercentage=50.0 -XX:MaxRAMPercentage=60.0"
+  - name: SPRING_RO_DATASOURCE_MAXIMUMPOOLSIZE
+    value: "5"
+  - name: SPRING_RO_DATASOURCE_MINIMUMIDLE
+    value: "3"
+  - name: SPRING_RW_DATASOURCE_MAXIMUMPOOLSIZE
+    value: "5"
+  - name: SPRING_RW_DATASOURCE_MINIMUMIDLE
+    value: "3"

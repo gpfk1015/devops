@@ -1,0 +1,16 @@
+commonEnv:
+  - name: SPRING_RO_DATASOURCE_URL
+    value: "postgresql://<POSTGRES_HOST>:<db port>/testdb"
+  - name: SPRING_RO_DATASOURCE_USERNAME
+    value: "<SPRING_RO_DATASOURCE_USERNAME>"
+  - name: SPRING_RO_DATASOURCE_PASSWORD
+    value: "<SPRING_RO_DATASOURCE_PASSWORD>"
+  - name: SPRING_RW_DATASOURCE_URL
+    value: "postgresql://<POSTGRES_HOST>:<db port>/testdb"
+  - name: SPRING_RW_DATASOURCE_USERNAME
+    value: "<SPRING_RW_DATASOURCE_USERNAME>"
+  - name: SPRING_RW_DATASOURCE_PASSWORD
+    value: "<SPRING_RW_DATASOURCE_PASSWORD>"
+
+jennifer:
+  key: <jennifer key>

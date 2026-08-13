@@ -1,0 +1,42 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    cert-manager.io/cluster-issuer: ca-clusterissuer
+    konghq.com/https-redirect-status-code: "301"
+    konghq.com/protocols: https
+    konghq.com/strip-path: "false"
+    kubernetes.io/ingress.class: default
+    meta.helm.sh/release-name: serengeti-kong
+    meta.helm.sh/release-namespace: serengeti-kong
+  creationTimestamp: "2025-09-05T00:04:56Z"
+  generation: 4
+  labels:
+    app.kubernetes.io/instance: serengeti-kong
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: kong
+    app.kubernetes.io/version: "3.3"
+    helm.sh/chart: kong-0.1.1
+    konghq.com/component: quickstart
+  name: serengeti-kong-kong-portal
+  namespace: serengeti-kong
+  resourceVersion: "53906984"
+  uid: f6927cc1-48a6-4cf7-8261-5f419b2b3aeb
+spec:
+  rules:
+  - host: konggw.api.inaea.re.kr
+    http:
+      paths:
+      - backend:
+          service:
+            name: serengeti-kong-kong-portal
+            port:
+              number: 8446
+        path: /portal
+        pathType: ImplementationSpecific
+  tls:
+  - hosts:
+    - konggw.api.inaea.re.kr
+    secretName: kong-server-tls
+status:
+  loadBalancer: {}

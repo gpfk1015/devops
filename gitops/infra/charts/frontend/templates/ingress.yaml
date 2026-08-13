@@ -1,0 +1,35 @@
+{{- range .Values.ingress }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $.Values.applicationName }}-{{ .className }}
+  labels:
+    app: {{ $.Values.applicationName }}
+  annotations:
+    konghq.com/preserve-host: "true"
+    kubernetes.io/ingress.class: {{ .className }}
+    konghq.com/protocols: "https"
+    konghq.com/https-redirect-status-code: "301"
+    {{- if .ipRestriction }}
+      {{- if .ipRestriction.pluginName }}
+    konghq.com/plugins: {{ .ipRestriction.pluginName }}
+      {{- end }}
+    {{- end }}
+spec:
+  rules:
+    {{- range .hosts }}
+    - host: "{{ .host }}"
+      http:
+        paths:
+          {{- range .paths }}
+          - path: "{{ .path }}"
+            pathType: {{ .pathType }}
+            backend:
+              service:
+                name: {{ $.Values.applicationName }}
+                port:
+                  number: {{ $.Values.service.port }}
+          {{- end }}
+    {{- end }}
+{{- end }}

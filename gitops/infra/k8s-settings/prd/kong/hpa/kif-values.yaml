@@ -1,0 +1,92 @@
+replicaCount: 3
+
+#20260129 추가
+deployment:
+  kong:
+    daemonset: false
+    enabled: true
+  userDefinedVolumeMounts:    # ✅ deployment 레벨에 있으면
+  - mountPath: /custom-error   # ✅ Kong Pod에 마운트됨
+    name: error-template
+    readOnly: true
+  userDefinedVolumes:
+  - configMap:
+      name: kong-error-template
+    name: error-template
+
+env:
+  error_template_html: /custom-error/error.html  #20260129 추가
+  database: "off"
+  log_level: info
+  #20260109 추가
+  trusted_ips: "0.0.0.0/0,::/0"
+  # real_ip_header: "proxy_protocol"
+  real_ip_recursive: "on"
+  real_ip_header: "X-Forwarded-For"
+  # real_ip_recursive: "off"
+  NGINX_PROXY_PROXY_BUFFER_SIZE: "160k"
+  NGINX_PROXY_PROXY_BUFFERS: "64 160k"
+
+image:
+  repository: <harbor prod repository_url>/library/kong
+  tag: "3.9"
+  pullPolicy: IfNotPresent
+
+proxy:
+  enabled: true
+  type: LoadBalancer
+  http:
+    enabled: true
+    nodePort: 30978
+    # parameters:
+    #   - proxy_protocol
+  # https:
+  #   enabled: true
+  #   nodePort: 30979
+  #   parameters:
+  #     - proxy_protocol
+  tls:
+    enabled: true
+    nodePort: 31335
+    # parameters:
+    #   - proxy_protocol
+
+ingressController:
+  enabled: true
+  ingressClass: default
+  # installCRDs: true
+  ingressClassAnnotations:
+   ingressclass.kubernetes.io/is-default-class: "true"
+  image:
+    repository: <harbor prod repository_url>/library/kong/kubernetes-ingress-controller
+    tag: "3.5"
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+resources:
+  requests:
+    cpu: 500m
+    memory: 1Gi
+  limits:
+    # cpu: 2000m
+    memory: 2Gi
+
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+    - type: Pods
+      pods:
+        metric:
+          name: kong_http_requests_per_second
+        target:
+          type: AverageValue
+          averageValue: 600  #600rps이상일 시 스케일아웃 / 1rps=1000m
+

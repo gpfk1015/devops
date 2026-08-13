@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service-test
+  namespace: sonarqube
+spec:
+  ports:
+  - nodePort: 30433
+    port: <db port>
+    protocol: TCP
+    targetPort: <db port>
+  selector:
+    app: postgres-test
+  sessionAffinity: None
+  type: NodePort

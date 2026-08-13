@@ -1,0 +1,55 @@
+apiVersion: configuration.konghq.com/v1
+kind: KongPlugin
+metadata:
+  name: zipkin
+  namespace: <namespace>
+  annotations:
+    kubernetes.io/ingress.class: default
+  # labels:
+  #   global: "true"
+plugin: zipkin
+config:
+  http_endpoint: http://k8s-monitoring-alloy.k8s-monitoring.svc.cluster.local:9411/api/v2/spans
+
+  # 샘플링 비율 (0.0 ~ 1.0)
+  # 1.0 = 100% 수집 / 0.01 = 1% 수집
+  sample_ratio: 1.0
+
+  local_service_name: basics-kong-proxy
+
+  propagation:
+    extract:
+      - w3c
+      - b3
+    inject:
+      - w3c
+      - b3
+    default_format: b3
+---
+apiVersion: configuration.konghq.com/v1
+kind: KongPlugin
+metadata:
+  name: zipkin
+  namespace: Namespace_B
+  annotations:
+    kubernetes.io/ingress.class: inaea
+  # labels:
+  #   global: "true"
+plugin: zipkin
+config:
+  http_endpoint: http://k8s-monitoring-alloy.k8s-monitoring.svc.cluster.local:9411/api/v2/spans
+
+  # 샘플링 비율 (0.0 ~ 1.0)
+  # 1.0 = 100% 수집 / 0.01 = 1% 수집
+  sample_ratio: 1.0
+
+  local_service_name: inaea-kong-proxy
+
+  propagation:
+    extract:
+      - w3c
+      - b3
+    inject:
+      - w3c
+      - b3
+    default_format: b3

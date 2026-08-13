@@ -1,0 +1,63 @@
+replicaCount: 3
+
+#20260129 추가
+deployment:
+  kong:
+    daemonset: false
+    enabled: true
+  userDefinedVolumeMounts:    # ✅ deployment 레벨에 있으면
+  - mountPath: /custom-error   # ✅ Kong Pod에 마운트됨
+    name: error-template
+    readOnly: true
+  userDefinedVolumes:
+  - configMap:
+      name: kong-error-template
+    name: error-template
+
+env:
+  error_template_html: /custom-error/error.html  #20260129 추가
+  database: "off"
+  log_level: info
+  trusted_ips: "0.0.0.0/0,::/0"
+  real_ip_header: "proxy_protocol"
+  real_ip_recursive: "on"
+
+image:
+  repository: <<Registry URL>>/library/kong
+  tag: "3.9"
+  pullPolicy: IfNotPresent
+
+proxy:
+  enabled: true
+  type: LoadBalancer
+  loadBalancerIP: 172.20.13.84
+  annotations:
+    loadbalancer.nhncloud/loadbalancer-name: "dr-inaea-fe-default-ingress"
+    loadbalancer.openstack.org/network-id: "445824ba-cdd1-4c52-bad9-fd41638c6738"
+    loadbalancer.openstack.org/subnet-id: "fa07e0b1-c467-4421-9f3d-1df132c6ca81"
+    loadbalancer.nhncloud/member-subnet-id: "af31afbb-7f4b-466d-98c1-c3111d52c565"
+    loadbalancer.nhncloud/loadbalancer-type: "dedicated"
+    service.beta.kubernetes.io/openstack-internal-load-balancer: "true"
+    loadbalancer.nhncloud/listener-protocol: TCP
+    loadbalancer.nhncloud/proxy-protocol: "true"
+  http:
+    enabled: true
+    # nodePort: 30080
+    parameters:
+      - proxy_protocol
+  tls:
+    enabled: true
+    # nodePort: 30443
+    parameters:
+      - proxy_protocol
+
+ingressController:
+  enabled: true
+  ingressClass: default
+  # installCRDs: true
+  ingressClassAnnotations:
+    ingressclass.kubernetes.io/is-default-class: "true"
+  image:
+    repository: <<Registry URL>>/library/kong/kubernetes-ingress-controller
+    tag: "3.5"
+    pullPolicy: IfNotPresent

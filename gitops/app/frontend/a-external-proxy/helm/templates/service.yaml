@@ -1,0 +1,21 @@
+{{- range .Values.services }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  {{- if .timeout }}
+  annotations:
+    konghq.com/connect-timeout: "{{ .timeout }}"
+    konghq.com/read-timeout: "{{ .timeout }}"
+    konghq.com/write-timeout: "{{ .timeout }}"
+  {{- end}}
+  name: "{{ .name }}-external"
+  namespace: Namespace_A
+spec:
+  type: ExternalName
+  externalName: "{{ .target }}"
+  ports:
+  - port: {{ .port }}
+    targetPort: {{ .port }}
+    protocol: TCP  
+{{- end }}

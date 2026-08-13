@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    konghq.com/connect-timeout: "180000" # 180s
+    konghq.com/read-timeout: "180000"
+    konghq.com/write-timeout: "180000"
+  name: {{ .Values.applicationName }}
+  labels:
+    app: {{ .Values.applicationName }}
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    app: {{ .Values.applicationName }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.port }}
+---
+{{- if .Values.service.bluegreen }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.applicationName }}-bluegreen
+  labels:
+    app: {{ .Values.applicationName }}
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    app: {{ .Values.applicationName }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.port }}
+{{- end}}

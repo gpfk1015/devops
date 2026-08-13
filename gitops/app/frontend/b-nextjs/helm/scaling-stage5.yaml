@@ -1,0 +1,14 @@
+# 서비스 down 
+resources:
+  requests:
+    cpu: "550m"
+    memory: "1536Mi" #1.5G
+  limits:
+    memory: "2304Mi" #2.25G
+replicas: 0
+hpa:
+  enabled: false
+  minReplicas: 3
+  maxReplicas: 8
+  targetCPUUtilizationPercentage: 60
+  targetMemoryUtilizationPercentage: 75

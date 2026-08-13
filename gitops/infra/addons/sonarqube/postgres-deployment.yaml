@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: sonarqube
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - env:
+        - name: POSTGRES_DB
+          value: sonar
+        - name: POSTGRES_USER
+          value: sonar
+        - name: POSTGRES_PASSWORD
+          value: sonar
+        image: <harbor repository_url>/gitlab-ci/sonarqube-postgres:15
+        imagePullPolicy: IfNotPresent
+        name: postgres
+        ports:
+        - containerPort: <db port>
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /var/lib/postgresql/data
+          name: data
+          subPath: postgres
+      dnsPolicy: ClusterFirst
+      imagePullSecrets:
+      - name: harbor-secret
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: postgres-data-pvc

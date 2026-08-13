@@ -1,0 +1,13 @@
+# 서비스 down
+resources:
+  requests:
+    cpu: "1000m"
+    memory: "3072Mi" #3G
+  limits:
+    memory: "5120Mi" #5G
+replicas: 0
+hpa:
+  enabled: false
+  minReplicas: 3
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 65

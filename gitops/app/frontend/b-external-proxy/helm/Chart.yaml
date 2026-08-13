@@ -1,0 +1,6 @@
+apiVersion: v2
+name: inaea-external-proxy
+description: Helm chart for ADNP backend App
+type: application
+version: 0.1.0
+appVersion: "0.0.1"

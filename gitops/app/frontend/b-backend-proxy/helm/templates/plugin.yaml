@@ -1,0 +1,13 @@
+{{- range .Values.services }}
+---
+apiVersion: configuration.konghq.com/v1
+kind: KongPlugin
+metadata:
+  name: {{ .name }}-transformer
+  namespace: {{ .namespace }}
+plugin: request-transformer
+config:
+  replace:
+    headers:
+    - Host:{{ .name }}.backend
+{{- end }}

@@ -1,0 +1,14 @@
+# 노드 10개 기준 설정 (타 핵심 서비스 집중 사용 기간)
+# - 클러스터 내 타 서비스 트래픽 피크로 인한 자원 경합 방지
+# - 타 서비스에 자원을 양보하되, 최소 가용성을 유지하도록 10개로 하향 조정
+resources:
+  requests:
+    cpu: "1000m"
+    memory: "3072Mi" #3G
+  limits:
+    memory: "5120Mi" #5G
+hpa:
+  enabled: true
+  minReplicas: 10
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 65

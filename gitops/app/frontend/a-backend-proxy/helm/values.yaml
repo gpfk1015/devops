@@ -1,0 +1,51 @@
+services:
+  - name: ba-lc
+    host: "service-a.com"
+    path: "/biz/blc"
+    stripPath: true
+    namespace: Namespace_A
+  - name: ba-lm
+    host: "service-a.com"
+    path: "/biz/blm"
+    stripPath: true
+    namespace: Namespace_A
+  - name: ba-lr
+    host: "service-a.com"
+    path: "/biz/blr"
+    stripPath: true
+    namespace: Namespace_A
+  - name: ba-mgmt
+    host: "service-a.com"
+    path: "/biz/bmt"
+    stripPath: true
+    namespace: Namespace_A
+  - name: ba-nb
+    host: "service-a.com"
+    path: "/biz/bnb"
+    stripPath: true
+    namespace: Namespace_A
+  - name: cm-auth
+    host: "service-a.com"
+    path: "/biz/cau"
+    stripPath: true
+    namespace: Namespace_A
+  - name: cm-ss
+    host: "service-a.com"
+    path: "/biz/css"
+    stripPath: true
+    namespace: Namespace_A
+  - name: cm-sy
+    host: "service-a.com"
+    path: "/biz/csy"
+    stripPath: true
+    namespace: Namespace_A
+  - name: cm-sy-test
+    host: "service-a.com"
+    path: "/biz/test"
+    stripPath: true
+    namespace: Namespace_A
+  - name: prod1-tokenserver
+    host: "service-a.com"
+    path: "/sso"
+    stripPath: false
+    namespace: sso 

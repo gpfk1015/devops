@@ -1,0 +1,43 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: docker-prune-cronjob
+  namespace: gitlab-runner
+spec:
+  concurrencyPolicy: Allow
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - command:
+            - /bin/sh
+            - -c
+            - |
+              running_images=$(docker ps --format '{{.Image}}' | xargs -r docker inspect --format '{{.Id}}' 2>/dev/null | sort -u)
+              all_images=$(docker images -q | sort -u)
+              unused_images=$(comm -23 <(echo "$all_images") <(echo "$running_images"))
+              if [ -n "$unused_images" ]; then
+                echo "$unused_images" | xargs -r docker rmi -f
+              else
+                echo "삭제할 이미지가 없습니다."
+              fi
+            env:
+            - name: DOCKER_HOST
+              value: tcp://docker-svc.gitlab-runner.svc.cluster.local:2375
+            image: docker:20.10.17
+            imagePullPolicy: IfNotPresent
+            name: docker-prune-container
+            resources: {}
+            terminationMessagePath: /dev/termination-log
+            terminationMessagePolicy: File
+          dnsPolicy: ClusterFirst
+          restartPolicy: Never
+          schedulerName: default-scheduler
+          securityContext: {}
+          terminationGracePeriodSeconds: 30
+  schedule: 0 4 * * *
+  successfulJobsHistoryLimit: 3
+  suspend: false
+  timeZone: Asia/Seoul

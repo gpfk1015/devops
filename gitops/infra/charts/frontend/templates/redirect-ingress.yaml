@@ -1,0 +1,30 @@
+{{- range .Values.redirectIngress }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ printf "%s-redirect" $.Values.applicationName }}-{{ .className }}
+  labels:
+    app: {{ $.Values.applicationName }}
+  annotations:
+    kubernetes.io/ingress.class: {{ .className }}
+    konghq.com/plugins: |
+      {{ printf "%s-redirect-status" $.Values.applicationName }}-{{ .className }},
+      {{ printf "%s-redirect-header" $.Values.applicationName }}-{{ .className }}
+spec:
+  rules:
+    {{- range .hosts }}
+    - host: "{{ .host }}"
+      http:
+        paths:
+          {{- range .paths }}
+          - path: "{{ .path }}"
+            pathType: {{ .pathType }}
+            backend:
+              service:
+                name: {{ $.Values.applicationName }}
+                port:
+                  number: {{ $.Values.service.port }}
+          {{- end }}
+    {{- end }}
+{{- end }}

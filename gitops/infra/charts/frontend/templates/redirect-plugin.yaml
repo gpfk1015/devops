@@ -1,0 +1,22 @@
+{{- range .Values.redirectIngress }}
+---
+apiVersion: configuration.konghq.com/v1
+kind: KongPlugin
+metadata:
+  name: {{ printf "%s-redirect-status" $.Values.applicationName }}-{{ .className }}
+plugin: request-termination
+config:
+  status_code: 301
+  content_type: "text/html; charset=UTF-8"
+  body: "<html><body><h1>301 Moved Permanently</h1><p>The document has moved <a href='{{ .location }}'>here</a>.</p></body></html>"  
+---
+apiVersion: configuration.konghq.com/v1
+kind: KongPlugin
+metadata:
+  name: {{ printf "%s-redirect-header" $.Values.applicationName }}-{{ .className }}
+plugin: response-transformer
+config:
+  add:
+    headers:
+      - "Location:{{ .location }}"
+{{- end }}
